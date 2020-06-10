@@ -1,0 +1,13 @@
+
+.normal {
+  background: #7999F2;
+}
+
+.box {
+  height: 100px;
+  width: 100px;
+  background: #7999F2;
+  padding: 10px;
+  margin: 10px;
+  border: 5px solid red;
+}
