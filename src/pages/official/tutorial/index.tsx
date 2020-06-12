@@ -3,54 +3,34 @@ import styles from "./index.less";
 import { Row, Col } from 'antd';
 
 export default () => {
+  // 第一个落子 X 下一个落子 O
+  const [nextPlayer, setNextPlayer] = useState('X')
   const [history, setHistory] = useState([{
     squares: Array(9).fill(null),
   }])
-
-  return (
-    <div>
-      <div>
-        <Board />
-      </div>
-      <div className={styles.info}>
-        <div>status</div>
-        <div>list</div>
-      </div>
-    </div>
-  )
-}
-
-function Board() {
-  // 第一个落子 X 下一个落子 O
-  const [nextPlayer, setNextPlayer] = useState('X')
-
-  // 把棋盘状态保存在父组件中，传递给子组件（提升子组件的状态）
-  const [squares, setSquares] = useState(Array(9).fill(null))
-
+  const current = history[history.length - 1];
   const clickSquare = (i : any) => {
-    if (squares[i] || calculateWinner(squares)) {
+    if (current.squares[i] || calculateWinner(current.squares)) {
       // alert('位置以落子或有胜出者')
       return
     }
     
     // 落子（set 会触发组件重新渲染）
-    setSquares(state => {
+    setHistory(state => {
       // 要返回一个新对象
-      state[i] = nextPlayer
-      return state.slice()
+      const squares = current.squares.slice()
+      squares[i] = nextPlayer
+      return state.concat([{
+        squares: squares,
+      }])
     })
-
+    
+    // 反转
     setNextPlayer(v => v === 'X' ? 'O' : 'X')
   }
-
-  const renderSquare = (i : any) => {
-    i = i - 1
-    return <Square value={squares[i]} onClick={() => clickSquare(i)} />
-  }
-
+  
   // 判断是否胜出
-  console.log('calculateWinner')
-  const winner = calculateWinner(squares);
+  const winner = calculateWinner(current.squares);
   let status;
   if (winner) {
     status = `Winner: ${winner}`
@@ -58,9 +38,47 @@ function Board() {
     status = `Next Palyer: ${nextPlayer}`
   }
 
+  const jumpTo = (move : any) => {
+    setHistory(history.slice(0, move))
+  }
+
+  const moves = history.map((step, move) => {
+    const desc = move ?
+      'Go to move #' + move :
+      'Go to game start';
+      return (
+        <li key={move}>
+          <button onClick={() => jumpTo(move)}>{ desc }</button>
+        </li>
+      )
+  })
+
+  return (
+    <Row justify="center">
+      <Col span={6}>
+        <div>
+          <Board
+            squares={current.squares}
+            onClick={(i : any) => clickSquare(i)}
+          />
+        </div>
+        <div className={styles.info}>
+          <h1>{status}</h1>
+          <ol>{moves}</ol>
+        </div>
+      </Col>
+    </Row>
+  )
+}
+
+function Board(props : any) {
+  const renderSquare = (i : any) => {
+    i = i - 1
+    return <Square value={props.squares[i]} onClick={() => props.onClick(i)} />
+  }
+
   return (
     <div>
-      <h1>{status}</h1>
       <div className={styles.board}>
         <Row>
           <Col span={8}>{renderSquare(1)}</Col>
@@ -103,12 +121,6 @@ function calculateWinner(squares : any) {
 }
 
 function Square(props : any) {
-  // const [value, setValue] = useState('')
-
-  // const click = () => {
-  //   setValue('X')
-  // }
-
   return (
     <div className={styles.square} onClick={props.onClick}>
       { props.value }
